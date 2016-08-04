@@ -1,0 +1,33 @@
+#include <iostream>
+#include <string.h>
+#include <sqlda.h>
+
+#include <sqlcpr.h>
+using namespace std;
+EXEC SQL BEGIN DECLARE SECTION;
+char uid[30];
+char order[4000];
+char pwd[30];
+int id;
+char nam[20];
+EXEC SQL END DECLARE SECTION;
+EXEC SQL INCLUDE SQLCA.H;
+int main()
+{
+ strcpy(uid,"E1210238@UnixDB03");
+ strcpy(pwd,"E1210238");
+ EXEC SQL WHENEVER SQLERROR GOTO errexit;
+ EXEC SQL CONNECT :uid IDENTIFIED BY :pwd;
+ cout<<"Connected to Oracle\n"<<endl;
+ cout<<"Enter a No:"<<endl;
+ cin>>id;
+ cout<<"Enter a Name:"<<endl;
+ cin>>nam;
+ EXEC SQL INSERT INTO test (tno,tname)VALUES(:id,:nam);
+ cout<<"Data successfully inserted"<<endl;
+ EXEC SQL COMMIT WORK RELEASE;
+ return 0;
+errexit:
+ cout<<"Connection failed";
+ return 0;
+}
