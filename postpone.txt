@@ -1,0 +1,200 @@
+#include "Postpone.hpp"
+#include<sqlda.h>
+#include<sqlca.h>
+#include<sqlcpr.h>
+#include<string.h>
+const int monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+EXEC SQL INCLUDE SQLCA;
+
+
+
+int dbConnect()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+char UserId[20],UserPassword[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(UserId,"E1193339@UnixDB03");
+strcpy(UserPassword,"E1193339");
+EXEC SQL CONNECT :UserId IDENTIFIED BY :UserPassword;
+if(sqlca.sqlcode>=0)
+        cout<<"successfully Connected"<<endl;
+else if(sqlca.sqlcode<0)
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+return 1;
+}
+
+
+
+int getDay(int custid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid;int day;
+EXEC SQL END DECLARE SECTION;
+customerid=custid;
+int flag=dbConnect();
+if(flag==1)
+{
+EXEC SQL DECLARE pc CURSOR FOR
+SELECT BOOKINGDAY  FROM booking where CUSTOMERID=:customerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN pc;
+
+EXEC SQL FETCH pc INTO :day;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return day;
+}
+
+
+
+int getMonth(int custid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid;int month;
+EXEC SQL END DECLARE SECTION;
+customerid=custid;
+int flag=dbConnect();
+if(flag==1)
+{
+EXEC SQL DECLARE pc CURSOR FOR
+SELECT BOOKINGMONTH  FROM booking where CUSTOMERID=:customerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN pc;
+
+EXEC SQL FETCH pc INTO :month;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return month;
+}
+
+
+
+int getYear(int custid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid;int year;
+EXEC SQL END DECLARE SECTION;
+customerid=custid;
+int flag=dbConnect();
+if(flag==1)
+{
+EXEC SQL DECLARE pc CURSOR FOR
+SELECT BOOKINGYEAR  FROM booking where CUSTOMERID=:customerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN pc;
+
+EXEC SQL FETCH pc INTO :year;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return year;
+}
+
+
+
+int getNotrvlrs(int custid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid;int notrvlrs;
+EXEC SQL END DECLARE SECTION;
+customerid=custid;
+int flag=dbConnect();
+if(flag==1)
+{
+EXEC SQL DECLARE pc CURSOR FOR
+SELECT NOTRVLRS   FROM booking where CUSTOMERID=:customerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN pc;
+
+EXEC SQL FETCH pc INTO :notrvlrs;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return notrvlrs;
+}
+
+
+int countLeapYears(Date d) {
+    int years = d.y;
+    if (d.m <= 2)
+        years--;
+    return years / 4 - years / 100 + years / 400;
+}
+
+
+
+
+int getDifference(Date dt1, Date dt2) {
+    long int n1 = dt1.y * 365 + dt1.d;
+    for (int i = 0; i < dt1.m - 1; i++)
+        n1 += monthDays[i];
+    n1 += countLeapYears(dt1);
+    long int n2 = dt2.y * 365 + dt2.d;
+    for (int i = 0; i < dt2.m - 1; i++)
+        n2 += monthDays[i];
+    n2 += countLeapYears(dt2);
+    return (n2 - n1);
+}
+
+
+
+
+int calculatePostponeBill(PostponeBean objectPostponeBean, int day, int month, int year, int numtrv)
+{
+ time_t t = time(0);
+    struct tm* now = localtime(&t);
+    cday = now->tm_mday;
+    cmonth = (now->tm_mon + 1);
+    cyear = (now->tm_year + 1900);
+    Date dt1 = {day, month, year};
+    Date dt2 = {cday, cmonth, cyear};
+    difference = getDifference(dt2, dt1);
+    difference = difference - 2;
+    if (difference >= 30) {
+        amountPaid = 14 * numtrv;
+    } else if (difference >= 15) {
+        amountPaid = 18 * numtrv;
+    } else if (difference >= 5) {
+        amountPaid = 20 * numtrv;
+    } else {
+
+    }
+    objectCancellationBean.setAmountPaid(amountPaid);
+    return objectCancellationBean;
+}
+
+
+
+void updateCustomer(int custid,int day,int month,int year)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   int customerId;
+   EXEC SQL END DECLARE SECTION;
+   customerId=custid;
+   int flag=dbConnect();
+   if(flag==1)
+   {
+      EXEC SQL UPDATE booking
+               SET BOOKINGDAY = :day, BOOKINGMONTH = :month, BOOKINGYEAR = :year
+               WHERE CUSTOMERID  = :customerId;
+      if(sqlca.sqlcode>=0)
+         cout<<" Successfully Deleted !! ";
+      else
+         cout<<" Deletion Failed due to invalid Id .. !! ";
+      EXEC SQL COMMIT WORK RELEASE;
+   }
+}
