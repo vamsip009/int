@@ -1,0 +1,794 @@
+#include "Customer.hpp"
+#include "Booking.hpp"
+#include "Cancellation.hpp"
+#include "Postpone.hpp"
+#include<sqlda.h>
+#include<sqlca.h>
+#include<sqlcpr.h>
+#include<string.h>
+EXEC SQL INCLUDE SQLCA;
+int Customer::dbConnectCustomer()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+char UserId[20],UserPassword[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(UserId,"E1205530@UnixDB03");
+strcpy(UserPassword,"E1205530");
+EXEC SQL CONNECT :UserId IDENTIFIED BY :UserPassword;
+if(sqlca.sqlcode>=0)
+        cout<<"successfully Connected"<<endl;
+else if(sqlca.sqlcode<0)
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+return 1;
+}
+
+int Customer::addCustomerDetails(string customertype,int customerage,string customername,string customeraddress,string customeremail,string customerphone)
+
+{      int cid;
+        EXEC SQL BEGIN DECLARE SECTION;
+        char Phone[32];
+        char Email[32];
+        char Name[32];
+        char Address[32];
+        char Type[21];
+        int Age;
+        static int customerid=100000;
+        EXEC SQL END DECLARE SECTION;
+        Age=customerage;
+        strcpy(Name,customername.c_str());
+        strcpy(Address,customeraddress.c_str());
+        strcpy(Email,customeremail.c_str());
+         strcpy(Type,customertype.c_str());
+         strcpy(Phone,customerphone.c_str());
+        int flag=dbConnectCustomer();
+        if(flag==1)
+        {
+                EXEC SQL INSERT INTO customer(customerid,customerphone,customeremail,customername,customeraddress,customertype,customerage) VALUES(:customerid ,:Phone,:Email,:Name,:Address,:Type,:Age);
+                EXEC SQL COMMIT WORK RELEASE;
+
+        }
+        if(sqlca.sqlcode<0)
+        {
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+        }
+
+      EXEC SQL COMMIT WORK RELEASE;
+          cid=customerid;
+      customerid++;
+return cid;
+}
+CustomerBean Customer::reviewDetails(string email){
+CustomerBean cdetail;
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid,customerage;
+char customername[10],customertype[7],customerphone[10],customeraddress[10],customeremail[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(customeremail,email.c_str());
+
+int flag=dbConnectCustomer();
+if(flag==1)
+{
+EXEC SQL DECLARE pc CURSOR FOR
+SELECT customerid,customername,customertype,customerage,customerphone,customeraddress FROM customer where CUSTOMEREMAIL=:customeremail;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+EXEC SQL OPEN pc;
+EXEC SQL FETCH pc INTO :customerid, :customername, :customertype, :customerage, :customerphone, :customeraddress;
+cdetail.setCustomerId(customerid);
+cdetail.setCustomerName(customername);
+cdetail.setCustomerType(customertype);
+cdetail.setCustomerAge(customerage);
+cdetail.setCustomerPhone(customerphone);
+cdetail.setCustomerAddress(customeraddress);
+                                          if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return cdetail;
+}
+
+
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BOOKING MODULE@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+int Booking::dbConnectBooking()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+char UserId[20],UserPassword[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(UserId,"E1205530@UnixDB03");
+strcpy(UserPassword,"E1205530");
+EXEC SQL CONNECT :UserId IDENTIFIED BY :UserPassword;
+if(sqlca.sqlcode>=0)
+        cout<<"successfully Connected"<<endl;
+else if(sqlca.sqlcode<0)
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+return 1;
+}
+
+int Booking::verifyCID(int cid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int customerid;int valid=0;int customid;
+EXEC SQL END DECLARE SECTION;
+customerid=cid;
+int flag=dbConnectBooking();
+if(flag==1)
+{
+EXEC SQL DECLARE bc CURSOR FOR
+SELECT customerid FROM customer where CUSTOMERID=:customerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN bc;
+
+
+EXEC SQL FETCH bc INTO :customid;
+cout<<"db id"<<customid;
+if (cid == customid)
+{
+valid =1;
+}
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE bc;
+EXEC SQL COMMIT WORK RELEASE;
+
+}
+return valid;
+}
+BookingBean Booking::addBookingDetails(BookingBean objectBookingBean)
+ {
+    double bill;string destname,acconame,pactype;
+     EXEC SQL BEGIN DECLARE SECTION;
+      double dbbill;
+      char destination[10],locationname[10],accomodation[10];
+      int notrvlrs = 2;
+      double value;
+          int custid=objectBookingBean.getCusomertId();
+          int dest = objectBookingBean.getDest();
+          int day=objectBookingBean.getDay();
+          int month=objectBookingBean.getMonth();
+          int year=objectBookingBean.getYear();
+      EXEC SQL END DECLARE SECTION;
+  if(dest==1)
+   {    
+		destname="newyork";
+   
+        if(type==1)
+        {           pactype="standard";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+6000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+8000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+7000;
+                        else
+							acconame="group";
+                                bill=bill+16000;
+         }
+
+        else if(type==2)
+        {
+					pactype="first";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+8000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+10000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+8000;
+                        else
+							acconame="group";
+                                bill=bill+17000;
+        }
+
+        else
+        {
+					pactype="deluxe";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+10000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+12000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+9000;
+                        else
+							acconame="group";
+                                bill=bill+18000;
+         }
+
+
+}
+
+else if(dest==2)
+{
+	destname="sydney"
+        if(type==1)
+        {
+				pactype="standard";
+                       if(accoType==1)
+							acconame="single";
+                                bill=bill+7000;
+                       else if(accoType==2)
+							acconame="couple";
+                                bill=bill+13000;
+                       else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+7500;
+                       else
+							acconame="group";
+                                bill=bill+16500;
+        }
+        else if(type==2)
+        {
+				pactype="first";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+9000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+16000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+8500;
+                        else
+							acconame="group";
+                                bill=bill+17500;
+        }
+   else
+        {
+				pactype="deluxe";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+11000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+17000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+9500;
+                        else
+							acconame="group";
+                                bill=bill+18500;
+         }
+
+
+}
+
+else
+{
+    destname="capetown"
+
+        if(type==1)
+         {
+				pactype="standard";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+8000;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+14000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+11500;
+                        else
+							acconame="group";
+                                bill=bill+17500;
+         }
+        else if(type==2)
+         {
+				pactype="first";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+9700;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+17000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+12500;
+                        else
+							acconame="group";
+                                bill=bill+18500;
+         }
+
+        else
+        {
+				pactype="deluxe";
+                        if(accoType==1)
+							acconame="single";
+                                bill=bill+11800;
+                        else if(accoType==2)
+							acconame="couple";
+                                bill=bill+18000;
+                        else if(accoType==3)
+							acconame="seniorcitizen";
+                                bill=bill+13500;
+                        else
+							acconame="group";
+                                bill=bill+19500;
+        }
+}
+objectBookingBean.setBill(bill);
+         dbbill=bill;
+        strcpy(destination,destname.c_str());
+        strcpy(locationname,pactype.c_str());
+		 strcpy(accomodation,acconame.c_str());
+      
+        int flag=dbConnectBooking();
+        if(flag==1)
+        {
+
+EXEC SQL INSERT INTO BOOKING(CUSTOMERID,BOOKINGDAY,BOOKINGMONTH,BOOKINGYEAR,DESTINATION,PACKAGETYPE,ACCOTYPE,BILL) VALUES(:custid,:day,:month,:year,:destination,:locationname,:accomodation,:dbbill);
+
+                EXEC SQL COMMIT WORK RELEASE;
+
+        }
+         if(sqlca.sqlcode<0)
+        {
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+        }
+         EXEC SQL COMMIT WORK RELEASE;
+    return objectBookingBean;
+}
+
+
+
+
+
+
+
+
+
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-CANCELLATION-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+
+int Cancellation ::  dbConnectCancellation()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+char UserId[20],UserPassword[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(UserId,"E1205530@UnixDB03");
+strcpy(UserPassword,"E1205530");
+EXEC SQL CONNECT :UserId IDENTIFIED BY :UserPassword;
+if(sqlca.sqlcode>=0)
+        cout<<"successfully Connected"<<endl;
+else if(sqlca.sqlcode<0)
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+return 1;
+}
+
+int Cancellation::verifyBID(int cancelcid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int cancelcustomerid;int cancelvalid=0;int cancelcustomid;
+EXEC SQL END DECLARE SECTION;
+cancelcustomerid=cancelcid;
+cout<<"actual id"<<cancelcustomerid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE cancel CURSOR FOR
+SELECT customerid FROM booking where CUSTOMERID=:cancelcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN cancel;
+
+EXEC SQL FETCH cancel INTO :cancelcustomid;
+cout<<"db id"<<cancelcustomid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE cancel CURSOR FOR
+SELECT customerid FROM booking where CUSTOMERID=:cancelcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN cancel;
+
+EXEC SQL FETCH cancel INTO :cancelcustomid;
+cout<<"db id"<<cancelcustomid;
+if (cancelcid == cancelcustomid)
+{
+cancelvalid =1;
+}
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE cancel;
+EXEC SQL COMMIT WORK RELEASE;
+
+}
+return cancelvalid;
+}
+
+int Cancellation :: Day(int dcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int dcustomerid;int day;
+EXEC SQL END DECLARE SECTION;
+dcustomerid=dcustid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE dc CURSOR FOR
+SELECT BOOKINGDAY  FROM booking where CUSTOMERID=:dcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN dc;
+
+EXEC SQL FETCH dc INTO :day;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE dc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return day;
+}
+int Cancellation :: Month(int mcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int mcustomerid;int month;
+EXEC SQL END DECLARE SECTION;
+mcustomerid=mcustid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE mc CURSOR FOR
+SELECT BOOKINGMONTH  FROM booking where CUSTOMERID=:mcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN mc;
+
+EXEC SQL FETCH mc INTO :month;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE mc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return month;
+}
+
+
+int Cancellation :: Year(int ycustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int ycustomerid;int year;
+EXEC SQL END DECLARE SECTION;
+ycustomerid=ycustid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE yc CURSOR FOR
+SELECT BOOKINGYEAR  FROM booking where CUSTOMERID=:ycustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN yc;
+
+EXEC SQL FETCH yc INTO :year;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE yc;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return year;
+}
+
+
+int Cancellation :: Notrvlrs(int ntcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int ntcustomerid;int notrvlrs;
+EXEC SQL END DECLARE SECTION;
+ntcustomerid=ntcustid;
+int flag=dbConnectCancellation();
+if(flag==1)
+{
+EXEC SQL DECLARE nt CURSOR FOR
+SELECT BILL  FROM booking where CUSTOMERID=:ntcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN nt;
+
+EXEC SQL FETCH nt INTO :notrvlrs;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE nt;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return notrvlrs;
+}
+
+const int monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+int countLeapYears(Date d) {
+    int years = d.y;
+    if (d.m <= 2)
+        years--;
+    return years / 4 - years / 100 + years / 400;
+}
+
+int getDifference(Date dt1, Date dt2) {
+    long int n1 = dt1.y * 365 + dt1.d;
+    for (int i = 0; i < dt1.m - 1; i++)
+        n1 += monthDays[i];
+    n1 += countLeapYears(dt1);
+    long int n2 = dt2.y * 365 + dt2.d;
+    for (int i = 0; i < dt2.m - 1; i++)
+        n2 += monthDays[i];
+    n2 += countLeapYears(dt2);
+    return (n2 - n1);
+}
+
+CancellationBean Cancellation :: updateCancellationDetails(CancellationBean objectCancellationBean, int day, int month, int year, int numtrv)
+{
+ time_t t = time(0);
+    struct tm* now = localtime(&t);
+    cday = now->tm_mday;
+    cmonth = (now->tm_mon + 1);
+    cyear = (now->tm_year + 1900);
+    Date dt1 = {day, month, year};
+    Date dt2 = {cday, cmonth, cyear};
+    difference = getDifference(dt2, dt1);
+    difference = difference - 2;
+    if (difference >= 30) {
+        amountPaid = 10 * numtrv;
+        amountPaid= amountPaid/100; 
+    } else if (difference >= 15) {
+        amountPaid = 15 * numtrv;
+        amountPaid= amountPaid/100;
+    } else if (difference >= 5) {
+       amountPaid = 19 * numtrv;
+        amountPaid= amountPaid/100;
+    } else {
+
+    }
+    objectCancellationBean.setAmountPaid(amountPaid);
+    return objectCancellationBean;
+}
+void Cancellation :: cancelDetail(int delcustid)
+{
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   int delcustomerId;
+   EXEC SQL END DECLARE SECTION;
+   delcustomerId=delcustid;
+   int flag=dbConnectCancellation();
+   if(flag==1)
+   {
+      EXEC SQL DELETE FROM booking WHERE CUSTOMERID  = :delcustomerId;
+      if(sqlca.sqlcode>=0)
+         cout<<" Successfully Deleted !! ";
+      else
+         cout<<" Deletion Failed due to invalid Id .. !! ";
+      EXEC SQL COMMIT WORK RELEASE;
+   }
+}
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-POSTPONE-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+int Postpone::dbConnectPostpone()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+char UserId[20],UserPassword[10];
+EXEC SQL END DECLARE SECTION;
+strcpy(UserId,"E1205530@UnixDB03");
+strcpy(UserPassword,"E1205530");
+EXEC SQL CONNECT :UserId IDENTIFIED BY :UserPassword;
+if(sqlca.sqlcode>=0)
+        cout<<"successfully Connected"<<endl;
+else if(sqlca.sqlcode<0)
+        cout<<sqlca.sqlerrm.sqlerrmc<<endl;
+return 1;
+}
+
+int Postpone::verifyPBID(int postcid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int postcustomerid;int postvalid=0;int postcustomid;
+EXEC SQL END DECLARE SECTION;
+postcustomerid=postcid;
+cout<<"actual id"<<postcustomerid;
+int flag=dbConnectPostpone();
+if(flag==1)
+{
+EXEC SQL DECLARE post CURSOR FOR
+SELECT customerid FROM booking where CUSTOMERID=:postcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN post;
+
+EXEC SQL FETCH post INTO :postcustomid;
+cout<<"db id"<<postcustomid;
+if (postcid == postcustomid)
+{
+postvalid =1;
+}
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE post;
+EXEC SQL COMMIT WORK RELEASE;
+
+}
+return postvalid;
+}
+
+int Postpone :: PDay(int pcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int pcustomerid;int pday;
+EXEC SQL END DECLARE SECTION;
+pcustomerid=pcustid;
+int flag=dbConnectPostpone();
+if(flag==1)
+{
+EXEC SQL DECLARE postday CURSOR FOR
+SELECT BOOKINGDAY  FROM booking where CUSTOMERID=:pcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN postday;
+
+EXEC SQL FETCH postday INTO :pday;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE postday;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return pday;
+}
+
+int Postpone :: PMonth(int pcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int pcustomerid;int pmonth;
+EXEC SQL END DECLARE SECTION;
+pcustomerid=pcustid;
+int flag=dbConnectPostpone();
+if(flag==1)
+{
+EXEC SQL DECLARE postmonth CURSOR FOR
+SELECT BOOKINGDAY  FROM booking where CUSTOMERID=:pcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN postmonth;
+
+EXEC SQL FETCH postmonth INTO :pmonth;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE postmonth;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return pmonth;
+}
+
+int Postpone :: PYear(int pcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int pcustomerid;int pyear;
+EXEC SQL END DECLARE SECTION;
+pcustomerid=pcustid;
+int flag=dbConnectPostpone();
+if(flag==1)
+{
+EXEC SQL DECLARE postyear CURSOR FOR
+SELECT BOOKINGDAY  FROM booking where CUSTOMERID=:pcustomerid ;
+if(sqlca.sqlcode==1403)
+                                           cout<<"error";
+ EXEC SQL OPEN postyear;
+
+EXEC SQL FETCH postyear INTO :pyear;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE postyear;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return pyear;
+}
+int Postpone :: PNotrvlrs(int pntcustid)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+int pntcustomerid;int pnotrvlrs;
+EXEC SQL END DECLARE SECTION;
+pntcustomerid=pntcustid;
+int flag=dbConnectPostpone();
+if(flag==1)
+{
+EXEC SQL DECLARE pnt CURSOR FOR
+SELECT bill  FROM booking where CUSTOMERID=:pntcustomerid ;
+if(sqlca.sqlcode==1403)
+cout<<"error";
+ EXEC SQL OPEN pnt;
+
+EXEC SQL FETCH pnt INTO :pnotrvlrs;
+if(sqlca.sqlcode==1403)
+         cout<<"\n\033[31m Sorry..!! No such records found\033[0m";
+EXEC SQL CLOSE pnt;
+EXEC SQL COMMIT WORK RELEASE;
+}
+return pnotrvlrs;
+}
+
+
+const int monthDay[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+int countLeapYear(Datepostpone d) {
+    int years = d.y;
+    if (d.m <= 2)
+        years--;
+    return years / 4 - years / 100 + years / 400;
+}
+
+
+int getDifferenc(Datepostpone dt1, Datepostpone dt2) {
+    long int n1 = dt1.y * 365 + dt1.d;
+    for (int i = 0; i < dt1.m - 1; i++)
+        n1 += monthDay[i];
+    n1 += countLeapYear(dt1);
+    long int n2 = dt2.y * 365 + dt2.d;
+    for (int i = 0; i < dt2.m - 1; i++)
+        n2 += monthDay[i];
+    n2 += countLeapYear(dt2);
+    return (n2 - n1);
+}
+
+PostponeBean Postpone :: updatePostponeDetails(PostponeBean objectPostponeBean, int day, int month, int year, int numtrv)
+{
+ time_t t = time(0);
+    struct tm* now = localtime(&t);
+    pday = now->tm_mday;
+    pmonth = (now->tm_mon + 1);
+    pyear = (now->tm_year + 1900);
+    Datepostpone dt1 = {day, month, year};
+cout<<"aday"<<day;
+cout<<"amonth"<<month;
+cout<<"ayear"<<year;
+    Datepostpone dt2 = {pday, pmonth, pyear};
+cout<<"cday"<<pday;
+cout<<"cmonth"<<pmonth;
+cout<<"cyear"<<pyear;
+    differenc = getDifferenc(dt2, dt1);
+    differenc = differenc - 2;
+    if (differenc >= 30) {
+       amountPaid = 20 * numtrv;
+        amountPaid= amountPaid/100;
+    } else if (differenc >= 15) {
+       amountPaid = 30 * numtrv;
+        amountPaid= amountPaid/100;
+    } else if (differenc >= 5) {
+        amountPaid = 40 * numtrv;
+        amountPaid= amountPaid/100;
+    } else {
+
+
+    }
+    objectPostponeBean.setAmountPaid(amountPaid);
+    return objectPostponeBean;
+}
+
+void Postpone :: postDetail(int delcustid,int day,int month,int year)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   int delcustomerId;
+   EXEC SQL END DECLARE SECTION;
+   delcustomerId=delcustid;
+   int flag=dbConnectPostpone();
+   if(flag==1)
+   {
+      EXEC SQL UPDATE booking
+         SET bookingday = :day,bookingmonth = :month,bookingyear = :year
+         WHERE CUSTOMERID  = :delcustomerId;
+      if(sqlca.sqlcode>=0)
+         cout<<" Successfully Updated !! ";
+      else
+         cout<<" Updation Failed due to invalid Id .. !! ";
+      EXEC SQL COMMIT WORK RELEASE;
+   }
+}
+

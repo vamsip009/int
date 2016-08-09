@@ -1,0 +1,64 @@
+#include "CancellationController.hpp"
+
+
+void CancellationController::initiateCancellation() {
+    int dt;
+    int yt, mt;
+    int valid = 0;
+    int custid;
+    int day ;
+    int month ;
+    int year ;
+    int numtrv ;
+    objectCancellationBean = objectCancellationUI.cancellationDetails();
+    custid=objectCancellationBean.getCustomerId();
+    valid=objectCancellation.verifyBID(custid);
+    if (valid == 1) {
+        dt=objectCancellation.Day(custid);
+		 mt=objectCancellation.Month(custid);
+		  yt=objectCancellation.Year(custid);
+		  numtrv=objectCancellation.Notrvlrs(custid);
+       /* objectCancellationBean = objectCancellation.updateCancellationDetails(objectCancellationBean, dt, mt, yt, numtrv);*/
+		
+    } else {
+        objectCancellationUI.displayStatus();
+    }
+}
+
+
+#include "BookingController.hpp"
+
+void BookingController::initiateBooking() {
+    int customerid;
+    string bname,tmode;
+    int valid = 0;
+    objectBookingBean = objectBookingUI.bookingDetails();
+    customerid= objectBookingBean.getCusomertId();
+    valid= objectBooking.verifyCID(customerid);
+    if (valid) {
+        objectBookingBean =objectBooking.addBookingDetails(objectBookingBean);
+        objectBookingUI.displayBill(objectBookingBean);
+    } else {
+        objectBookingUI.bookingStatus();
+    }
+
+
+
+
+
+
+create table Booking(
+ CUSTOMERID NUMBER(7) primary key,
+ BOOKINGDAY  VARCHAR2(2) NOT NULL,
+ BOOKINGMONTH  VARCHAR2(3) NOT NULL,
+ BOOKINGYEAR VARCHAR2(4) NOT NULL,
+ DESTINATION VARCHAR2(10) ,
+ PACKAGETYPE VARCHAR2(10),
+ ACCOTYPE VARCHAR2(10),
+  BILL  NUMBER(10)
+);
+
+
+
+
+
